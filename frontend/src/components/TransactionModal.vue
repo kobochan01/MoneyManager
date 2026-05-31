@@ -5,6 +5,7 @@ import type { Transaction } from '@/api/types'
 
 const props = defineProps<{
   transaction?: Transaction
+  initialDate?: string
 }>()
 
 const emit = defineEmits<{
@@ -16,7 +17,7 @@ const store = useTransactionStore()
 
 const form = ref({
   transaction_type: 'expense' as 'income' | 'expense',
-  date: new Date().toISOString().slice(0, 10),
+  date: props.initialDate ?? new Date().toISOString().slice(0, 10),
   amount: '',
   category_name: '',
   memo: '',

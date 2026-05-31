@@ -100,6 +100,99 @@ describe('useTransactionStore', () => {
     })
   })
 
+  describe('月ナビゲーション', () => {
+    it('初期値は現在の年月', () => {
+      const store = useTransactionStore()
+      const now = new Date()
+      expect(store.currentYear).toBe(now.getFullYear())
+      expect(store.currentMonth).toBe(now.getMonth() + 1)
+    })
+
+    it('prevMonth()で月が1つ前に戻る', () => {
+      const store = useTransactionStore()
+      store.currentYear = 2026
+      store.currentMonth = 5
+      store.prevMonth()
+      expect(store.currentMonth).toBe(4)
+      expect(store.currentYear).toBe(2026)
+    })
+
+    it('prevMonth()で1月から前の年12月に戻る', () => {
+      const store = useTransactionStore()
+      store.currentYear = 2026
+      store.currentMonth = 1
+      store.prevMonth()
+      expect(store.currentMonth).toBe(12)
+      expect(store.currentYear).toBe(2025)
+    })
+
+    it('nextMonth()で月が1つ進む', () => {
+      const store = useTransactionStore()
+      store.currentYear = 2026
+      store.currentMonth = 5
+      store.nextMonth()
+      expect(store.currentMonth).toBe(6)
+      expect(store.currentYear).toBe(2026)
+    })
+
+    it('nextMonth()で12月から翌年1月に進む', () => {
+      const store = useTransactionStore()
+      store.currentYear = 2026
+      store.currentMonth = 12
+      store.nextMonth()
+      expect(store.currentMonth).toBe(1)
+      expect(store.currentYear).toBe(2027)
+    })
+  })
+
+  describe('monthlyTransactions', () => {
+    it('currentYear・currentMonthの月の取引のみ返す', () => {
+      const store = useTransactionStore()
+      store.currentYear = 2026
+      store.currentMonth = 5
+      store.transactions = [
+        makeTransaction({ id: 1, date: '2026-05-10' }),
+        makeTransaction({ id: 2, date: '2026-04-20' }),
+        makeTransaction({ id: 3, date: '2026-06-01' }),
+      ]
+      expect(store.monthlyTransactions.length).toBe(1)
+      expect(store.monthlyTransactions[0]!.date).toBe('2026-05-10')
+    })
+
+    it('monthlyIncomeは当月の収入合計を返す', () => {
+      const store = useTransactionStore()
+      store.currentYear = 2026
+      store.currentMonth = 5
+      store.transactions = [
+        makeTransaction({ id: 1, transaction_type: 'income', amount: '200000', date: '2026-05-07' }),
+        makeTransaction({ id: 2, transaction_type: 'income', amount: '50000', date: '2026-04-07' }),
+      ]
+      expect(store.monthlyIncome).toBe(200000)
+    })
+
+    it('monthlyExpenseは当月の支出合計を返す', () => {
+      const store = useTransactionStore()
+      store.currentYear = 2026
+      store.currentMonth = 5
+      store.transactions = [
+        makeTransaction({ id: 1, transaction_type: 'expense', amount: '30000', date: '2026-05-10' }),
+        makeTransaction({ id: 2, transaction_type: 'expense', amount: '20000', date: '2026-04-10' }),
+      ]
+      expect(store.monthlyExpense).toBe(30000)
+    })
+
+    it('monthlyBalanceは当月の収入合計から支出合計を引いた値', () => {
+      const store = useTransactionStore()
+      store.currentYear = 2026
+      store.currentMonth = 5
+      store.transactions = [
+        makeTransaction({ id: 1, transaction_type: 'income', amount: '200000', date: '2026-05-07' }),
+        makeTransaction({ id: 2, transaction_type: 'expense', amount: '80000', date: '2026-05-10' }),
+      ]
+      expect(store.monthlyBalance).toBe(120000)
+    })
+  })
+
   describe('計算プロパティ', () => {
     it('totalIncomeは収入の合計を返す', () => {
       const store = useTransactionStore()
