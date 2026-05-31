@@ -645,3 +645,16 @@ docker compose up -d
 ridk enable
 bundle install
 ```
+
+### ログインしても画面が遷移しない（CORSエラー）
+
+Viteの開発サーバーは通常 `localhost:5173` で起動しますが、すでに使用中の場合は `localhost:5174` 以降に切り替わります。
+RailsのCORS設定は `localhost:5173` と `localhost:5174` の両方を許可しています。
+
+```powershell
+# Viteのポートを確認（npm run dev 実行時のログ）
+# → Local: http://localhost:5173/ または 5174/
+
+# 使用ポートを固定したい場合は frontend/vite.config.ts に追記
+# server: { port: 5173 }
+```
