@@ -1,0 +1,14 @@
+class User < ApplicationRecord
+  has_secure_password
+
+  has_many :group_members, dependent: :destroy
+  has_many :groups, through: :group_members
+
+  validates :name, presence: true
+  validates :email,
+    presence: true,
+    uniqueness: { case_sensitive: false },
+    format: { with: URI::MailTo::EMAIL_REGEXP }
+
+  before_save { self.email = email.downcase }
+end
