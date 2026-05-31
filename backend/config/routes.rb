@@ -10,6 +10,8 @@ Rails.application.routes.draw do
       post   "auth/signup",  to: "auth#signup"
       post   "auth/login",   to: "auth#login"
       delete "auth/logout",  to: "auth#logout"
+
+      resources :transactions, only: [:index, :create, :update, :destroy]
     end
   end
 end
