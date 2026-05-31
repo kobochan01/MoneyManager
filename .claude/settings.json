@@ -1,0 +1,32 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "$raw = [Console]::In.ReadToEnd(); $data = $raw | ConvertFrom-Json; $cmd = $data.tool_input.command; if ($cmd -match 'git\\s+push\\s+(origin\\s+)?main(\\s|$)') { @{decision='block'; reason='mainへの直接pushは禁止されています。必ずfeature/fix/docs/choreブランチを作成し、PRを通じてマージしてください。'} | ConvertTo-Json -Compress }",
+            "timeout": 10,
+            "statusMessage": "mainへの直接pushでないか確認中..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "$f=(git log -1 --name-only --pretty=format:); $c=($f | Select-String '\\.(ts|tsx|js|json|sql|css|java|py|go|rs|swift|kt|rb|vue)'); $m=($f | Select-String '\\.md'); $d1=git diff --name-only; $d2=git diff --name-only --cached; $pm=($d1+$d2) | Select-String '\\.md'; if ($c -and -not $m -and -not $pm) { @{'continue'=$false; stopReason='コードファイルのコミットが検出されましたが.mdファイルの更新が含まれていません。README.md、DEVELOPMENT.md、docs/配下の.mdファイルを確認し差分があれば更新してください。'} | ConvertTo-Json -Compress }",
+            "timeout": 15,
+            "statusMessage": ".mdファイルの更新状況を確認中..."
+          }
+        ]
+      }
+    ]
+  }
+}
