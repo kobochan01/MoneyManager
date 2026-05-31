@@ -15,6 +15,7 @@ frontend/.env.development.local
 # Rails
 backend/config/master.key
 backend/config/credentials/*.key
+backend/tmp/
 
 # OS
 .DS_Store
