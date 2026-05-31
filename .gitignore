@@ -10,6 +10,11 @@ out/
 .env
 .env.local
 .env.*.local
+frontend/.env.development.local
+
+# Rails
+backend/config/master.key
+backend/config/credentials/*.key
 
 # OS
 .DS_Store
