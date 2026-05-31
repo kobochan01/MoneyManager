@@ -489,7 +489,47 @@ npm test
 
 ---
 
-## 8. よく使うコマンド集
+## 8. フロントエンドのファイル構成
+
+フェーズ2以降のフロントエンドファイル構成です。
+
+```
+frontend/src/
+  api/
+    client.ts          ← Axiosクライアント（Bearer トークン自動付与）
+    auth.ts            ← 認証API（signup / login / logout）
+    transactions.ts    ← 収支CRUD API（index / create / update / destroy）
+    types.ts           ← 共通型定義（User, Transaction, リクエスト型 等）
+  stores/
+    auth.ts            ← 認証ストア（Pinia）
+    transactions.ts    ← 収支ストア（Pinia）: 一覧・集計・CRUD
+    __tests__/
+      transactions.spec.ts  ← Vitestテスト（9件）
+  components/
+    TransactionModal.vue    ← 収支登録・編集モーダル（S-05）
+  views/
+    LoginView.vue      ← ログイン画面
+    SignupView.vue     ← 新規登録画面
+    HomeView.vue       ← 収支一覧・サマリー画面（S-04の基礎）
+  router/
+    index.ts           ← ルーティング定義・ナビゲーションガード
+```
+
+### フロントエンドのテスト実行
+
+```powershell
+cd C:\Projects\MoneyManager\frontend
+
+# テスト実行（Vitest）
+npm run test:unit -- --run
+
+# 型チェック
+npm run type-check
+```
+
+---
+
+## 9. よく使うコマンド集
 
 ### Rails コマンド
 
