@@ -438,7 +438,58 @@ npm test
 
 ---
 
-## 7. よく使うコマンド集
+## 7. 実装済みAPIエンドポイント
+
+すべてのエンドポイントはベースURL `http://localhost:3000/api/v1` に続けて使います。
+認証が必要なエンドポイントは `Authorization: Bearer <token>` ヘッダーを付けてください。
+
+### 認証
+
+| メソッド | パス | 認証 | 説明 |
+|---|---|---|---|
+| POST | `/auth/signup` | 不要 | ユーザー登録 |
+| POST | `/auth/login` | 不要 | ログイン |
+| DELETE | `/auth/logout` | 必要 | ログアウト |
+
+リクエスト例（signup / login）：
+
+```json
+{
+  "user": {
+    "name": "テストユーザー",
+    "email": "user@example.com",
+    "password": "password123",
+    "password_confirmation": "password123"
+  }
+}
+```
+
+### 収支
+
+| メソッド | パス | 認証 | 説明 |
+|---|---|---|---|
+| GET | `/transactions` | 必要 | 収支一覧（自グループ） |
+| POST | `/transactions` | 必要 | 収支登録 |
+| PUT | `/transactions/:id` | 必要 | 収支更新 |
+| DELETE | `/transactions/:id` | 必要 | 収支削除 |
+
+リクエスト例（POST /transactions）：
+
+```json
+{
+  "transaction": {
+    "transaction_type": "expense",
+    "amount": 3000,
+    "date": "2026-05-31",
+    "category_name": "食費",
+    "memo": "スーパー"
+  }
+}
+```
+
+---
+
+## 8. よく使うコマンド集
 
 ### Rails コマンド
 
