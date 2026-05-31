@@ -13,6 +13,9 @@ export const useTransactionStore = defineStore('transactions', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  const currentYear = ref(new Date().getFullYear())
+  const currentMonth = ref(new Date().getMonth() + 1) // 1-12
+
   const totalIncome = computed(() =>
     transactions.value
       .filter((t) => t.transaction_type === 'income')
@@ -26,6 +29,43 @@ export const useTransactionStore = defineStore('transactions', () => {
   )
 
   const balance = computed(() => totalIncome.value - totalExpense.value)
+
+  const monthlyTransactions = computed(() => {
+    const monthStr = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}`
+    return transactions.value.filter((t) => t.date.startsWith(monthStr))
+  })
+
+  const monthlyIncome = computed(() =>
+    monthlyTransactions.value
+      .filter((t) => t.transaction_type === 'income')
+      .reduce((sum, t) => sum + Number(t.amount), 0),
+  )
+
+  const monthlyExpense = computed(() =>
+    monthlyTransactions.value
+      .filter((t) => t.transaction_type === 'expense')
+      .reduce((sum, t) => sum + Number(t.amount), 0),
+  )
+
+  const monthlyBalance = computed(() => monthlyIncome.value - monthlyExpense.value)
+
+  function prevMonth() {
+    if (currentMonth.value === 1) {
+      currentYear.value -= 1
+      currentMonth.value = 12
+    } else {
+      currentMonth.value -= 1
+    }
+  }
+
+  function nextMonth() {
+    if (currentMonth.value === 12) {
+      currentYear.value += 1
+      currentMonth.value = 1
+    } else {
+      currentMonth.value += 1
+    }
+  }
 
   async function fetchTransactions(): Promise<void> {
     loading.value = true
@@ -62,12 +102,20 @@ export const useTransactionStore = defineStore('transactions', () => {
     transactions,
     loading,
     error,
+    currentYear,
+    currentMonth,
     totalIncome,
     totalExpense,
     balance,
+    monthlyTransactions,
+    monthlyIncome,
+    monthlyExpense,
+    monthlyBalance,
     fetchTransactions,
     addTransaction,
     editTransaction,
     removeTransaction,
+    prevMonth,
+    nextMonth,
   }
 })
