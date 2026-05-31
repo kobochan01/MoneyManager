@@ -7,7 +7,7 @@
           {
             "type": "command",
             "shell": "powershell",
-            "command": "$raw = [Console]::In.ReadToEnd(); $data = $raw | ConvertFrom-Json; $cmd = $data.tool_input.command; if ($cmd -match 'git\\s+push\\s+origin\\s+main' -or $cmd -match 'git\\s+push\\s+.*\\bmain\\b') { @{decision='block'; reason='mainへの直接pushは禁止されています。必ずfeature/fix/docs/choreブランチを作成し、PRを通じてマージしてください。'} | ConvertTo-Json -Compress }",
+            "command": "$raw = [Console]::In.ReadToEnd(); $data = $raw | ConvertFrom-Json; $cmd = $data.tool_input.command; if ($cmd -match 'git\\s+push\\s+(origin\\s+)?main(\\s|$)') { @{decision='block'; reason='mainへの直接pushは禁止されています。必ずfeature/fix/docs/choreブランチを作成し、PRを通じてマージしてください。'} | ConvertTo-Json -Compress }",
             "timeout": 10,
             "statusMessage": "mainへの直接pushでないか確認中..."
           }
