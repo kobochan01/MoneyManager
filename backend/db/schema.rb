@@ -10,7 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_31_054808) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_31_064603) do
+  create_table "categories", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "group_id", null: false
+    t.string "name", limit: 100, null: false
+    t.string "transaction_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_id", "name", "transaction_type"], name: "index_categories_on_group_id_and_name_and_transaction_type", unique: true
+    t.index ["group_id"], name: "index_categories_on_group_id"
+  end
+
   create_table "group_members", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "group_id", null: false
@@ -26,6 +36,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_31_054808) do
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "transactions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.decimal "amount", precision: 10, null: false
+    t.bigint "category_id", null: false
+    t.datetime "created_at", null: false
+    t.date "date", null: false
+    t.bigint "fixed_expense_id"
+    t.bigint "group_id", null: false
+    t.boolean "is_fixed", default: false, null: false
+    t.text "memo"
+    t.string "transaction_type", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["category_id"], name: "index_transactions_on_category_id"
+    t.index ["date"], name: "index_transactions_on_date"
+    t.index ["group_id"], name: "index_transactions_on_group_id"
+    t.index ["user_id"], name: "index_transactions_on_user_id"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
