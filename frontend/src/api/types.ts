@@ -20,6 +20,12 @@ export interface Category {
   transaction_type: 'income' | 'expense'
 }
 
+export interface UserSetting {
+  start_day: number
+  closing_day: number
+  week_start: 'sunday' | 'monday'
+}
+
 export interface Transaction {
   id: number
   transaction_type: 'income' | 'expense'
