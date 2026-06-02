@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTransactionStore } from '@/stores/transactions'
+import { useUserSettingStore } from '@/stores/userSettings'
 import { buildCalendarGrid, computeTapeStatus } from '@/utils/calendar'
 import TransactionModal from '@/components/TransactionModal.vue'
 import type { Transaction } from '@/api/types'
@@ -10,15 +11,27 @@ import type { Transaction } from '@/api/types'
 const router = useRouter()
 const store = useTransactionStore()
 const authStore = useAuthStore()
+const settingStore = useUserSettingStore()
 
 const showModal = ref(false)
 const editingTransaction = ref<Transaction | undefined>(undefined)
 const selectedDate = ref<string | undefined>(undefined)
 
 const todayStr = new Date().toISOString().slice(0, 10)
-const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
+const SUN_LABELS = ['日', '月', '火', '水', '木', '金', '土']
+const MON_LABELS = ['月', '火', '水', '木', '金', '土', '日']
 
-const calendarGrid = computed(() => buildCalendarGrid(store.currentYear, store.currentMonth))
+const dayLabels = computed(() =>
+  settingStore.setting.week_start === 'monday' ? MON_LABELS : SUN_LABELS,
+)
+
+const calendarGrid = computed(() =>
+  buildCalendarGrid(
+    store.currentYear,
+    store.currentMonth,
+    settingStore.setting.week_start === 'monday',
+  ),
+)
 
 const tapeStatusMap = computed(() =>
   computeTapeStatus(store.transactions, store.currentYear, store.currentMonth),
@@ -69,6 +82,7 @@ async function handleLogout() {
 
 onMounted(() => {
   store.fetchTransactions()
+  settingStore.fetchSettings()
 })
 </script>
 
@@ -76,7 +90,10 @@ onMounted(() => {
   <div class="layout">
     <header class="header">
       <h1 class="app-title">MoneyManager</h1>
-      <button class="btn-logout" @click="handleLogout">ログアウト</button>
+      <div class="header-actions">
+        <button class="btn-settings" @click="router.push('/settings')">設定</button>
+        <button class="btn-logout" @click="handleLogout">ログアウト</button>
+      </div>
     </header>
 
     <main class="main">
@@ -90,7 +107,7 @@ onMounted(() => {
 
       <!-- 曜日ヘッダー -->
       <div class="calendar-header">
-        <div v-for="label in DAY_LABELS" :key="label" class="day-label">{{ label }}</div>
+        <div v-for="label in dayLabels" :key="label" class="day-label">{{ label }}</div>
       </div>
 
       <!-- カレンダーグリッド -->
@@ -178,6 +195,21 @@ onMounted(() => {
   font-size: 1.3rem;
   font-weight: bold;
   margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-settings {
+  padding: 6px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.875rem;
 }
 
 .btn-logout {

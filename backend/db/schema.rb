@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_31_064603) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_02_070643) do
   create_table "categories", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "group_id", null: false
@@ -56,6 +56,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_31_064603) do
     t.index ["user_id"], name: "index_transactions_on_user_id"
   end
 
+  create_table "user_settings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "closing_day", null: false
+    t.datetime "created_at", null: false
+    t.integer "start_day", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "week_start", default: "sunday", null: false
+    t.index ["user_id"], name: "index_user_settings_on_user_id", unique: true
+  end
+
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -67,4 +77,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_31_064603) do
 
   add_foreign_key "group_members", "groups"
   add_foreign_key "group_members", "users"
+  add_foreign_key "user_settings", "users"
 end

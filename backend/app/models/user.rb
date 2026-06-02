@@ -3,6 +3,7 @@ class User < ApplicationRecord
 
   has_many :group_members, dependent: :destroy
   has_many :groups, through: :group_members
+  has_one  :user_setting, dependent: :destroy
 
   validates :name, presence: true
   validates :email,

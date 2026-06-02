@@ -11,8 +11,9 @@ Rails.application.routes.draw do
       post   "auth/login",   to: "auth#login"
       delete "auth/logout",  to: "auth#logout"
 
-      resources :transactions, only: [:index, :create, :update, :destroy]
-      resources :categories,   only: [:index]
+      resources :transactions,  only: [:index, :create, :update, :destroy]
+      resources :categories,    only: [:index]
+      resource  :user_settings, only: [:show, :update]
     end
   end
 end
