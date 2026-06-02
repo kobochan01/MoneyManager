@@ -12,6 +12,7 @@ Rails.application.routes.draw do
       delete "auth/logout",  to: "auth#logout"
 
       resources :transactions, only: [:index, :create, :update, :destroy]
+      resources :categories,   only: [:index]
     end
   end
 end
