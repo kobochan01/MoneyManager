@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserSettingStore } from '@/stores/userSettings'
 
+const router = useRouter()
 const store = useUserSettingStore()
 
 const form = ref({ start_day: 1, closing_day: 31, week_start: 'sunday' as 'sunday' | 'monday' })
@@ -23,7 +25,10 @@ async function submit() {
 
 <template>
   <div class="settings">
-    <h1>設定</h1>
+    <div class="settings-header">
+      <button class="btn-back" @click="router.push('/calendar')">← カレンダーへ戻る</button>
+      <h1>設定</h1>
+    </div>
 
     <form @submit.prevent="submit" class="settings-form">
       <p v-if="store.error" class="error">{{ store.error }}</p>
@@ -69,10 +74,29 @@ async function submit() {
   padding: 0 16px;
 }
 
+.settings-header {
+  margin-bottom: 24px;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: #2c3e50;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.btn-back:hover {
+  text-decoration: underline;
+}
+
 h1 {
   font-size: 1.4rem;
   font-weight: bold;
-  margin-bottom: 24px;
+  margin: 0;
 }
 
 .settings-form {

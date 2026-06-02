@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTransactionStore } from '@/stores/transactions'
 import { useUserSettingStore } from '@/stores/userSettings'
-import { buildCalendarGrid, computeTapeStatus } from '@/utils/calendar'
+import { buildCalendarGrid, computeTapeStatus, computePeriod } from '@/utils/calendar'
 import TransactionModal from '@/components/TransactionModal.vue'
 import type { Transaction } from '@/api/types'
 
@@ -25,27 +25,56 @@ const dayLabels = computed(() =>
   settingStore.setting.week_start === 'monday' ? MON_LABELS : SUN_LABELS,
 )
 
-const calendarGrid = computed(() =>
-  buildCalendarGrid(
+const period = computed(() =>
+  computePeriod(
     store.currentYear,
     store.currentMonth,
+    settingStore.setting.start_day,
+    settingStore.setting.closing_day,
+  ),
+)
+
+const calendarGrid = computed(() =>
+  buildCalendarGrid(
+    period.value.periodStart,
+    period.value.periodEnd,
     settingStore.setting.week_start === 'monday',
   ),
 )
 
 const tapeStatusMap = computed(() =>
-  computeTapeStatus(store.transactions, store.currentYear, store.currentMonth),
+  computeTapeStatus(store.transactions, period.value.periodStart, period.value.periodEnd),
+)
+
+const periodTransactions = computed(() =>
+  store.transactions.filter(
+    (t) => t.date >= period.value.periodStart && t.date <= period.value.periodEnd,
+  ),
 )
 
 const transactionsByDate = computed(() => {
   const map = new Map<string, Transaction[]>()
-  for (const tx of store.monthlyTransactions) {
+  for (const tx of periodTransactions.value) {
     const list = map.get(tx.date) ?? []
     list.push(tx)
     map.set(tx.date, list)
   }
   return map
 })
+
+const periodIncome = computed(() =>
+  periodTransactions.value
+    .filter((t) => t.transaction_type === 'income')
+    .reduce((sum, t) => sum + Number(t.amount), 0),
+)
+
+const periodExpense = computed(() =>
+  periodTransactions.value
+    .filter((t) => t.transaction_type === 'expense')
+    .reduce((sum, t) => sum + Number(t.amount), 0),
+)
+
+const periodBalance = computed(() => periodIncome.value - periodExpense.value)
 
 function openAddModal(date?: string) {
   editingTransaction.value = undefined
@@ -100,7 +129,10 @@ onMounted(() => {
       <!-- 月ナビゲーション -->
       <div class="month-nav">
         <button class="nav-btn" @click="store.prevMonth()">＜</button>
-        <h2 class="month-title">{{ store.currentYear }}年 {{ store.currentMonth }}月</h2>
+        <h2 class="month-title">
+          {{ store.currentYear }}年 {{ store.currentMonth }}月
+          <span class="period-label">（{{ period.periodStart.slice(5).replace('-', '/') }}〜{{ period.periodEnd.slice(5).replace('-', '/') }}）</span>
+        </h2>
         <button class="nav-btn" @click="store.nextMonth()">＞</button>
         <button class="btn-add" @click="openAddModal()">＋</button>
       </div>
@@ -148,18 +180,18 @@ onMounted(() => {
       <div class="summary">
         <div class="summary-item income">
           <span class="summary-label">収入合計</span>
-          <span class="summary-value">¥{{ formatSummaryAmount(store.monthlyIncome) }}</span>
+          <span class="summary-value">¥{{ formatSummaryAmount(periodIncome) }}</span>
         </div>
         <div class="summary-item expense">
           <span class="summary-label">支出合計</span>
-          <span class="summary-value">¥{{ formatSummaryAmount(store.monthlyExpense) }}</span>
+          <span class="summary-value">¥{{ formatSummaryAmount(periodExpense) }}</span>
         </div>
         <div
           class="summary-item balance"
-          :class="{ negative: store.monthlyBalance < 0 }"
+          :class="{ negative: periodBalance < 0 }"
         >
           <span class="summary-label">残　　高</span>
-          <span class="summary-value">¥{{ formatSummaryAmount(store.monthlyBalance) }}</span>
+          <span class="summary-value">¥{{ formatSummaryAmount(periodBalance) }}</span>
         </div>
       </div>
     </main>
@@ -246,6 +278,12 @@ onMounted(() => {
   font-weight: bold;
   margin: 0;
   color: #2c3e50;
+}
+
+.period-label {
+  font-size: 0.75rem;
+  font-weight: normal;
+  color: #888;
 }
 
 .nav-btn {

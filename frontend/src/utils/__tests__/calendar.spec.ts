@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildCalendarGrid, computeTapeStatus } from '../calendar'
+import { buildCalendarGrid, computeTapeStatus, computePeriod } from '../calendar'
 import type { Transaction } from '@/api/types'
 
 const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
@@ -13,38 +13,69 @@ const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
   ...overrides,
 })
 
+describe('computePeriod', () => {
+  it('開始日 <= 締め日のとき同月内の期間を返す（デフォルト設定）', () => {
+    const { periodStart, periodEnd } = computePeriod(2026, 7, 1, 31)
+    expect(periodStart).toBe('2026-07-01')
+    expect(periodEnd).toBe('2026-07-31')
+  })
+
+  it('開始日 > 締め日のとき前月の開始日〜当月の締め日を返す', () => {
+    const { periodStart, periodEnd } = computePeriod(2026, 7, 21, 20)
+    expect(periodStart).toBe('2026-06-21')
+    expect(periodEnd).toBe('2026-07-20')
+  })
+
+  it('1月に開始日 > 締め日のとき前年12月から始まる', () => {
+    const { periodStart, periodEnd } = computePeriod(2027, 1, 21, 20)
+    expect(periodStart).toBe('2026-12-21')
+    expect(periodEnd).toBe('2027-01-20')
+  })
+
+  it('締め日が月の日数を超えるとき末日に丸める（2月・締め日31日）', () => {
+    const { periodStart, periodEnd } = computePeriod(2026, 2, 1, 31)
+    expect(periodStart).toBe('2026-02-01')
+    expect(periodEnd).toBe('2026-02-28')
+  })
+})
+
 describe('buildCalendarGrid', () => {
   it('セル数は7の倍数になる', () => {
-    expect(buildCalendarGrid(2026, 5).length % 7).toBe(0)
-    expect(buildCalendarGrid(2026, 2).length % 7).toBe(0)
-    expect(buildCalendarGrid(2026, 1).length % 7).toBe(0)
+    expect(buildCalendarGrid('2026-05-01', '2026-05-31').length % 7).toBe(0)
+    expect(buildCalendarGrid('2026-02-01', '2026-02-28').length % 7).toBe(0)
+    expect(buildCalendarGrid('2026-06-21', '2026-07-20').length % 7).toBe(0)
   })
 
   it('日曜始まりのとき2026年5月1日（金曜）の前に5個のnullが来る', () => {
-    // 2026-05-01 は金曜日（0=Sun, 5=Fri）→ 5個のnullがパディング
-    const grid = buildCalendarGrid(2026, 5)
+    const grid = buildCalendarGrid('2026-05-01', '2026-05-31')
     expect(grid[0]).toBeNull()
     expect(grid[4]).toBeNull()
     expect(grid[5]).toBe('2026-05-01')
   })
 
   it('月曜始まりのとき2026年5月1日（金曜）の前に4個のnullが来る', () => {
-    // Mon-based: Mon=0, Tue=1, Wed=2, Thu=3, Fri=4 → 4個のnull
-    const grid = buildCalendarGrid(2026, 5, true)
+    const grid = buildCalendarGrid('2026-05-01', '2026-05-31', true)
     expect(grid[0]).toBeNull()
     expect(grid[3]).toBeNull()
     expect(grid[4]).toBe('2026-05-01')
   })
 
-  it('月の最初と最後の日付が正しい', () => {
-    const grid = buildCalendarGrid(2026, 5)
+  it('標準月の最初と最後の日付が正しい', () => {
+    const grid = buildCalendarGrid('2026-05-01', '2026-05-31')
     const dates = grid.filter((d): d is string => d !== null)
     expect(dates[0]).toBe('2026-05-01')
     expect(dates[dates.length - 1]).toBe('2026-05-31')
   })
 
+  it('カスタム期間（6/21〜7/20）の最初と最後の日付が正しい', () => {
+    const grid = buildCalendarGrid('2026-06-21', '2026-07-20')
+    const dates = grid.filter((d): d is string => d !== null)
+    expect(dates[0]).toBe('2026-06-21')
+    expect(dates[dates.length - 1]).toBe('2026-07-20')
+  })
+
   it('末尾の余りセルはnull', () => {
-    const grid = buildCalendarGrid(2026, 5)
+    const grid = buildCalendarGrid('2026-05-01', '2026-05-31')
     const lastDateIdx = grid.lastIndexOf('2026-05-31')
     grid.slice(lastDateIdx + 1).forEach((cell) => expect(cell).toBeNull())
   })
@@ -53,12 +84,12 @@ describe('buildCalendarGrid', () => {
 describe('computeTapeStatus', () => {
   it('収入がなければ空のMapを返す', () => {
     const txs = [makeTx({ transaction_type: 'expense', date: '2026-05-10' })]
-    expect(computeTapeStatus(txs, 2026, 5).size).toBe(0)
+    expect(computeTapeStatus(txs, '2026-05-01', '2026-05-31').size).toBe(0)
   })
 
-  it('最初の収入日からテープが緑で始まり月末まで続く', () => {
+  it('最初の収入日からテープが緑で始まり期末まで続く', () => {
     const txs = [makeTx({ transaction_type: 'income', amount: '100000', date: '2026-05-07' })]
-    const map = computeTapeStatus(txs, 2026, 5)
+    const map = computeTapeStatus(txs, '2026-05-01', '2026-05-31')
     expect(map.get('2026-05-06')).toBeUndefined()
     expect(map.get('2026-05-07')).toBe('green')
     expect(map.get('2026-05-31')).toBe('green')
@@ -69,40 +100,52 @@ describe('computeTapeStatus', () => {
       makeTx({ id: 1, transaction_type: 'income', amount: '10000', date: '2026-05-07' }),
       makeTx({ id: 2, transaction_type: 'expense', amount: '15000', date: '2026-05-10' }),
     ]
-    const map = computeTapeStatus(txs, 2026, 5)
+    const map = computeTapeStatus(txs, '2026-05-01', '2026-05-31')
     expect(map.get('2026-05-07')).toBe('green')
     expect(map.get('2026-05-09')).toBe('green')
     expect(map.get('2026-05-10')).toBe('red')
     expect(map.get('2026-05-31')).toBe('red')
   })
 
-  it('一度赤に転落したら後から収入があっても月末まで赤のまま', () => {
+  it('一度赤に転落したら後から収入があっても期末まで赤のまま', () => {
     const txs = [
       makeTx({ id: 1, transaction_type: 'income', amount: '10000', date: '2026-05-07' }),
       makeTx({ id: 2, transaction_type: 'expense', amount: '15000', date: '2026-05-10' }),
       makeTx({ id: 3, transaction_type: 'income', amount: '100000', date: '2026-05-20' }),
     ]
-    const map = computeTapeStatus(txs, 2026, 5)
+    const map = computeTapeStatus(txs, '2026-05-01', '2026-05-31')
     expect(map.get('2026-05-10')).toBe('red')
     expect(map.get('2026-05-20')).toBe('red')
     expect(map.get('2026-05-31')).toBe('red')
   })
 
-  it('支出でマイナスにならなければ月末まで緑のまま', () => {
+  it('支出でマイナスにならなければ期末まで緑のまま', () => {
     const txs = [
       makeTx({ id: 1, transaction_type: 'income', amount: '100000', date: '2026-05-07' }),
       makeTx({ id: 2, transaction_type: 'expense', amount: '30000', date: '2026-05-15' }),
     ]
-    const map = computeTapeStatus(txs, 2026, 5)
+    const map = computeTapeStatus(txs, '2026-05-01', '2026-05-31')
     expect(map.get('2026-05-07')).toBe('green')
     expect(map.get('2026-05-31')).toBe('green')
     expect(map.has('2026-05-06')).toBe(false)
   })
 
-  it('他の月のトランザクションは無視される', () => {
+  it('期間外のトランザクションは無視される', () => {
     const txs = [
       makeTx({ id: 1, transaction_type: 'income', amount: '100000', date: '2026-04-07' }),
     ]
-    expect(computeTapeStatus(txs, 2026, 5).size).toBe(0)
+    expect(computeTapeStatus(txs, '2026-05-01', '2026-05-31').size).toBe(0)
+  })
+
+  it('カスタム期間（6/21〜7/20）でも正しく動作する', () => {
+    const txs = [
+      makeTx({ id: 1, transaction_type: 'income', amount: '100000', date: '2026-06-25' }),
+      makeTx({ id: 2, transaction_type: 'expense', amount: '30000', date: '2026-07-10' }),
+    ]
+    const map = computeTapeStatus(txs, '2026-06-21', '2026-07-20')
+    expect(map.get('2026-06-24')).toBeUndefined()
+    expect(map.get('2026-06-25')).toBe('green')
+    expect(map.get('2026-07-10')).toBe('green')
+    expect(map.get('2026-07-20')).toBe('green')
   })
 })
