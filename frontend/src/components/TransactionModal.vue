@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useTransactionStore } from '@/stores/transactions'
+import { useCategoryStore } from '@/stores/categories'
 import type { Transaction } from '@/api/types'
 
 const props = defineProps<{
@@ -14,6 +15,15 @@ const emit = defineEmits<{
 }>()
 
 const store = useTransactionStore()
+const categoryStore = useCategoryStore()
+
+const filteredCategories = computed(() =>
+  categoryStore.categories.filter((c) => c.transaction_type === form.value.transaction_type),
+)
+
+onMounted(() => {
+  categoryStore.fetchCategories()
+})
 
 const form = ref({
   transaction_type: 'expense' as 'income' | 'expense',
@@ -49,7 +59,9 @@ function validate(): boolean {
   if (!form.value.amount || isNaN(amt) || !Number.isInteger(amt) || amt < 1) {
     errors.value.push('金額は1以上の整数を入力してください')
   }
-  if (!form.value.category_name.trim()) errors.value.push('カテゴリは必須です')
+  if (!form.value.category_name.trim() || form.value.category_name === '__new__') {
+    errors.value.push('カテゴリは必須です')
+  }
   return errors.value.length === 0
 }
 
@@ -130,8 +142,19 @@ async function submit() {
 
         <div class="field">
           <label for="category">カテゴリ</label>
-          <input
+          <select
+            v-if="filteredCategories.length > 0 && !transaction"
             id="category"
+            v-model="form.category_name"
+            required
+          >
+            <option value="">カテゴリを選択してください</option>
+            <option v-for="c in filteredCategories" :key="c.id" :value="c.name">{{ c.name }}</option>
+            <option value="__new__">＋ 新しいカテゴリを入力</option>
+          </select>
+          <input
+            v-if="filteredCategories.length === 0 || form.category_name === '__new__' || !!transaction"
+            id="category-input"
             v-model="form.category_name"
             type="text"
             placeholder="例: 食費"

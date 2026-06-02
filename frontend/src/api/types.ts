@@ -14,6 +14,12 @@ export interface ErrorResponse {
   errors?: string[]
 }
 
+export interface Category {
+  id: number
+  name: string
+  transaction_type: 'income' | 'expense'
+}
+
 export interface Transaction {
   id: number
   transaction_type: 'income' | 'expense'
