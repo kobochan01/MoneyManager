@@ -1,17 +1,35 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTransactionStore } from '@/stores/transactions'
 import { useUserSettingStore } from '@/stores/userSettings'
 import { buildCalendarGrid, computeTapeStatus, computePeriod } from '@/utils/calendar'
 import TransactionModal from '@/components/TransactionModal.vue'
-import type { Transaction } from '@/api/types'
+import type { Transaction, ScheduledFixedExpense } from '@/api/types'
+import { getScheduledFixedExpenses } from '@/api/fixedExpenses'
 
 const router = useRouter()
 const store = useTransactionStore()
 const authStore = useAuthStore()
 const settingStore = useUserSettingStore()
+
+const scheduledFixedExpenses = ref<ScheduledFixedExpense[]>([])
+
+async function fetchScheduled() {
+  const startYear  = parseInt(period.value.periodStart.slice(0, 4))
+  const startMonth = parseInt(period.value.periodStart.slice(5, 7))
+  const endYear    = parseInt(period.value.periodEnd.slice(0, 4))
+  const endMonth   = parseInt(period.value.periodEnd.slice(5, 7))
+
+  const promises = [getScheduledFixedExpenses(startYear, startMonth)]
+  if (startMonth !== endMonth || startYear !== endYear) {
+    promises.push(getScheduledFixedExpenses(endYear, endMonth))
+  }
+
+  const results = await Promise.all(promises)
+  scheduledFixedExpenses.value = results.flatMap((r) => r.data.scheduled)
+}
 
 const showModal = ref(false)
 const editingTransaction = ref<Transaction | undefined>(undefined)
@@ -74,7 +92,25 @@ const periodExpense = computed(() =>
     .reduce((sum, t) => sum + Number(t.amount), 0),
 )
 
-const periodBalance = computed(() => periodIncome.value - periodExpense.value)
+const scheduledByDate = computed(() => {
+  const map = new Map<string, ScheduledFixedExpense[]>()
+  for (const fe of scheduledFixedExpenses.value) {
+    if (fe.date >= period.value.periodStart && fe.date <= period.value.periodEnd) {
+      const list = map.get(fe.date) ?? []
+      list.push(fe)
+      map.set(fe.date, list)
+    }
+  }
+  return map
+})
+
+const periodFixedExpense = computed(() =>
+  scheduledFixedExpenses.value
+    .filter((fe) => fe.date >= period.value.periodStart && fe.date <= period.value.periodEnd)
+    .reduce((sum, fe) => sum + fe.amount, 0),
+)
+
+const periodBalance = computed(() => periodIncome.value - periodExpense.value - periodFixedExpense.value)
 
 function openAddModal(date?: string) {
   editingTransaction.value = undefined
@@ -109,9 +145,12 @@ async function handleLogout() {
   router.push('/login')
 }
 
+watch(() => period.value.periodStart, fetchScheduled)
+
 onMounted(() => {
   store.fetchTransactions()
   settingStore.fetchSettings()
+  fetchScheduled()
 })
 </script>
 
@@ -172,6 +211,13 @@ onMounted(() => {
               @click.stop="openEditModal(tx)"
             >
               {{ tx.transaction_type === 'income' ? '+' : '-' }}{{ formatAmountShort(tx.amount) }}
+            </div>
+            <div
+              v-for="fe in scheduledByDate.get(dateStr) ?? []"
+              :key="`fe-${fe.id}`"
+              class="tx-item expense"
+            >
+              -{{ formatAmountShort(String(fe.amount)) }}
             </div>
           </template>
         </div>

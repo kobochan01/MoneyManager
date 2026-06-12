@@ -14,7 +14,11 @@ Rails.application.routes.draw do
       resources :transactions,    only: [:index, :create, :update, :destroy]
       resources :categories,      only: [:index]
       resource  :user_settings,   only: [:show, :update]
-      resources :fixed_expenses,  only: [:index, :create, :update, :destroy]
+      resources :fixed_expenses,  only: [:index, :create, :update, :destroy] do
+        collection do
+          get :scheduled
+        end
+      end
     end
   end
 end

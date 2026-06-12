@@ -27,6 +27,16 @@ module Api
         end
       end
 
+      def scheduled
+        year  = params[:year].to_i
+        month = params[:month].to_i
+        result = @current_user.fixed_expenses.includes(:category).map do |fe|
+          date = adjusted_date(year, month, fe.day)
+          { id: fe.id, name: fe.name, amount: fe.amount, date: date.to_s, category: { id: fe.category_id, name: fe.category.name } }
+        end
+        render json: { scheduled: result }, status: :ok
+      end
+
       def destroy
         @fixed_expense.destroy
         render json: { message: "削除しました" }, status: :ok
@@ -41,6 +51,13 @@ module Api
 
       def fixed_expense_params
         params.require(:fixed_expense).permit(:name, :amount, :day, :category_id)
+      end
+
+      def adjusted_date(year, month, day)
+        last_day = Date.new(year, month, -1).day
+        date = Date.new(year, month, [day, last_day].min)
+        date += 1 while date.saturday? || date.sunday? || ::HolidayJp.holiday?(date)
+        date
       end
 
       def fixed_expense_json(fe)

@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { FixedExpense, CreateFixedExpenseRequest } from './types'
+import type { FixedExpense, CreateFixedExpenseRequest, ScheduledFixedExpense } from './types'
 
 export const getFixedExpenses = () =>
   apiClient.get<{ fixed_expenses: FixedExpense[] }>('/api/v1/fixed_expenses')
@@ -12,3 +12,8 @@ export const updateFixedExpense = (data: FixedExpense) =>
 
 export const deleteFixedExpense = (id: number) =>
   apiClient.delete<{ message: string }>(`/api/v1/fixed_expenses/${id}`)
+
+export const getScheduledFixedExpenses = (year: number, month: number) =>
+  apiClient.get<{ scheduled: ScheduledFixedExpense[] }>('/api/v1/fixed_expenses/scheduled', {
+    params: { year, month },
+  })

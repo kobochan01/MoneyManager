@@ -85,6 +85,49 @@ RSpec.describe "Api::V1::FixedExpenses", type: :request do
     end
   end
 
+  describe "GET /api/v1/fixed_expenses/scheduled" do
+    context "認証済みの場合" do
+      it "平日の場合はその日の日付を返す" do
+        create(:fixed_expense, day: 5, user: user, category: category)
+        get "/api/v1/fixed_expenses/scheduled", params: { year: 2026, month: 6 }, headers: headers
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json["scheduled"][0]["date"]).to eq("2026-06-05")
+      end
+
+      it "土曜日の場合は翌月曜日の日付を返す" do
+        create(:fixed_expense, day: 6, user: user, category: category)
+        get "/api/v1/fixed_expenses/scheduled", params: { year: 2026, month: 6 }, headers: headers
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json["scheduled"][0]["date"]).to eq("2026-06-08")
+      end
+
+      it "日曜日の場合は翌月曜日の日付を返す" do
+        create(:fixed_expense, day: 7, user: user, category: category)
+        get "/api/v1/fixed_expenses/scheduled", params: { year: 2026, month: 6 }, headers: headers
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json["scheduled"][0]["date"]).to eq("2026-06-08")
+      end
+
+      it "祝日の場合は翌平日の日付を返す" do
+        create(:fixed_expense, day: 1, user: user, category: category)
+        get "/api/v1/fixed_expenses/scheduled", params: { year: 2026, month: 1 }, headers: headers
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json["scheduled"][0]["date"]).to eq("2026-01-02")
+      end
+    end
+
+    context "未認証の場合" do
+      it "401を返す" do
+        get "/api/v1/fixed_expenses/scheduled", params: { year: 2026, month: 6 }
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
   describe "DELETE /api/v1/fixed_expenses/:id" do
     let!(:fixed_expense) { create(:fixed_expense, day: 1, user: user, category: category) }
 
