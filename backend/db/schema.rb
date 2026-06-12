@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_02_070643) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_03_002301) do
   create_table "categories", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "group_id", null: false
@@ -19,6 +19,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_02_070643) do
     t.datetime "updated_at", null: false
     t.index ["group_id", "name", "transaction_type"], name: "index_categories_on_group_id_and_name_and_transaction_type", unique: true
     t.index ["group_id"], name: "index_categories_on_group_id"
+  end
+
+  create_table "fixed_expenses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.bigint "category_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "day", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["category_id"], name: "index_fixed_expenses_on_category_id"
+    t.index ["user_id"], name: "index_fixed_expenses_on_user_id"
   end
 
   create_table "group_members", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -75,6 +87,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_02_070643) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "fixed_expenses", "categories"
+  add_foreign_key "fixed_expenses", "users"
   add_foreign_key "group_members", "groups"
   add_foreign_key "group_members", "users"
   add_foreign_key "user_settings", "users"
