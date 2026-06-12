@@ -120,6 +120,7 @@ onMounted(() => {
     <header class="header">
       <h1 class="app-title">MoneyManager</h1>
       <div class="header-actions">
+        <button class="btn-settings" @click="router.push('/fixed-expenses')">固定費</button>
         <button class="btn-settings" @click="router.push('/settings')">設定</button>
         <button class="btn-logout" @click="handleLogout">ログアウト</button>
       </div>
