@@ -66,3 +66,11 @@ export interface CreateFixedExpenseRequest {
   day: number
   category_id: number
 }
+
+export interface ScheduledFixedExpense {
+  id: number
+  name: string
+  amount: number
+  date: string
+  category: { id: number; name: string }
+}
