@@ -83,6 +83,7 @@ MySQL 8（Port:3306）
 | POST | /api/v1/fixed_expenses | 固定費登録 |
 | PATCH | /api/v1/fixed_expenses/:id | 固定費更新 |
 | DELETE | /api/v1/fixed_expenses/:id | 固定費削除 |
+| GET | /api/v1/fixed_expenses/scheduled | 固定費の当月引き落とし日一覧（土日祝ずらし済み） |
 | GET | /api/v1/summary | 月次集計 |
 | GET | /api/v1/settings | ユーザー設定取得 |
 | PATCH | /api/v1/settings | ユーザー設定更新 |
