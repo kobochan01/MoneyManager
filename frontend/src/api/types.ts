@@ -50,3 +50,19 @@ export interface UpdateTransactionRequest {
   date?: string
   memo?: string
 }
+
+export interface FixedExpense {
+  id: number
+  name: string
+  amount: number
+  day: number
+  category_id: number
+  category: { id: number; name: string }
+}
+
+export interface CreateFixedExpenseRequest {
+  name: string
+  amount: number
+  day: number
+  category_id: number
+}

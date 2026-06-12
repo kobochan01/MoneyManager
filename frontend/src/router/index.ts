@@ -32,6 +32,12 @@ const router = createRouter({
       component: () => import('../views/SettingsView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/fixed-expenses',
+      name: 'fixed-expenses',
+      component: () => import('../views/FixedExpensesView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
