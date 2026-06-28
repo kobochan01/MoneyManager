@@ -38,6 +38,17 @@ const router = createRouter({
       component: () => import('../views/FixedExpensesView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/group',
+      name: 'group',
+      component: () => import('../views/GroupView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/invitations/accept',
+      name: 'invitation-accept',
+      component: () => import('../views/InvitationAcceptView.vue'),
+    },
   ],
 })
 

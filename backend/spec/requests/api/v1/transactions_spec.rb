@@ -2,12 +2,10 @@ require "rails_helper"
 
 RSpec.describe "Api::V1::Transactions", type: :request do
   let(:user)     { create(:user) }
-  let(:group)    { create(:group) }
+  let(:group)    { user.groups.first }
   let(:category) { create(:category, group: group, name: "食費", transaction_type: "expense") }
   let(:token)    { JwtService.encode(user_id: user.id) }
   let(:headers)  { { "Authorization" => "Bearer #{token}", "Content-Type" => "application/json" } }
-
-  before { create(:group_member, user: user, group: group, role: "owner") }
 
   describe "GET /api/v1/transactions" do
     context "認証済みの場合" do

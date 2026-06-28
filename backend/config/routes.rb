@@ -19,6 +19,13 @@ Rails.application.routes.draw do
           get :scheduled
         end
       end
+
+      resource  :group,       only: [:show]
+      resources :invitations, only: [:create, :show] do
+        member do
+          post :accept
+        end
+      end
     end
   end
 end
