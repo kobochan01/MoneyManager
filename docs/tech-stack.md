@@ -87,6 +87,7 @@ MySQL 8（Port:3306）
 | GET | /api/v1/summary | 月次集計 |
 | GET | /api/v1/settings | ユーザー設定取得 |
 | PATCH | /api/v1/settings | ユーザー設定更新 |
-| POST | /api/v1/invitations | 招待送信 |
+| GET | /api/v1/group | グループ情報・メンバー一覧取得 |
+| POST | /api/v1/invitations | 招待URL発行 |
 | GET | /api/v1/invitations/:token | 招待情報取得 |
-| POST | /api/v1/invitations/:token/accept | 招待受諾 |
+| POST | /api/v1/invitations/:token/accept | 招待受諾・グループ参加 |
