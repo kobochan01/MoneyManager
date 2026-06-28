@@ -74,3 +74,24 @@ export interface ScheduledFixedExpense {
   date: string
   category: { id: number; name: string }
 }
+
+export interface GroupMember {
+  id: number
+  name: string
+  role: 'owner' | 'member'
+}
+
+export interface Group {
+  id: number
+  name: string
+  members: GroupMember[]
+}
+
+export interface Invitation {
+  group_name: string
+  invited_by: string
+  email: string
+  expires_at: string
+  accepted: boolean
+  expired: boolean
+}
