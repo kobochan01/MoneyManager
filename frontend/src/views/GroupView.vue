@@ -1,5 +1,6 @@
 <template>
   <div class="group-view">
+    <button class="back-button" @click="router.push('/calendar')">← カレンダーに戻る</button>
     <h1>グループ管理</h1>
 
     <section v-if="group" class="group-info">
@@ -41,10 +42,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getGroup } from '@/api/group'
 import { createInvitation } from '@/api/invitations'
 import type { Group } from '@/api/types'
 
+const router = useRouter()
 const group = ref<Group | null>(null)
 const inviteEmail = ref('')
 const inviteUrl = ref('')
@@ -85,6 +88,15 @@ const copyUrl = async () => {
   max-width: 600px;
   margin: 0 auto;
   padding: 24px;
+}
+.back-button {
+  background: none;
+  border: none;
+  color: #2ecc71;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  margin-bottom: 16px;
 }
 .member-list {
   list-style: none;
