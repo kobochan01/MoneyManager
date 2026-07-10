@@ -6,6 +6,7 @@ import { useTransactionStore } from '@/stores/transactions'
 import { useUserSettingStore } from '@/stores/userSettings'
 import { buildCalendarGrid, computeTapeStatus, computePeriod } from '@/utils/calendar'
 import TransactionModal from '@/components/TransactionModal.vue'
+import DayTransactionListModal from '@/components/DayTransactionListModal.vue'
 import type { Transaction, ScheduledFixedExpense } from '@/api/types'
 import { getScheduledFixedExpenses } from '@/api/fixedExpenses'
 
@@ -118,16 +119,23 @@ function openAddModal(date?: string) {
   showModal.value = true
 }
 
-function openEditModal(tx: Transaction) {
-  editingTransaction.value = tx
-  selectedDate.value = undefined
-  showModal.value = true
-}
-
 function closeModal() {
   showModal.value = false
   editingTransaction.value = undefined
   selectedDate.value = undefined
+}
+
+const showDayListModal = ref(false)
+const selectedDayForList = ref<string | undefined>(undefined)
+
+function openDayList(date: string) {
+  selectedDayForList.value = date
+  showDayListModal.value = true
+}
+
+function closeDayList() {
+  showDayListModal.value = false
+  selectedDayForList.value = undefined
 }
 
 function formatAmountShort(amount: string): string {
@@ -193,7 +201,7 @@ onMounted(() => {
             'is-empty': !dateStr,
             'is-today': dateStr === todayStr,
           }"
-          @click="dateStr && openAddModal(dateStr)"
+          @click="dateStr && openDayList(dateStr)"
         >
           <template v-if="dateStr">
             <div class="day-number">{{ Number(dateStr.slice(8)) }}</div>
@@ -207,7 +215,6 @@ onMounted(() => {
               :key="tx.id"
               class="tx-item"
               :class="tx.transaction_type"
-              @click.stop="openEditModal(tx)"
             >
               {{ tx.transaction_type === 'income' ? '+' : '-' }}{{ formatAmountShort(tx.amount) }}
             </div>
@@ -248,6 +255,12 @@ onMounted(() => {
       :initial-date="selectedDate"
       @close="closeModal"
       @saved="store.fetchTransactions()"
+    />
+
+    <DayTransactionListModal
+      v-if="showDayListModal && selectedDayForList"
+      :date="selectedDayForList"
+      @close="closeDayList"
     />
   </div>
 </template>
