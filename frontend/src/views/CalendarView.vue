@@ -170,10 +170,10 @@ onMounted(() => {
       <!-- 月ナビゲーション -->
       <div class="month-nav">
         <button class="nav-btn" @click="store.prevMonth()">＜</button>
-        <h2 class="month-title">
-          {{ store.currentYear }}年 {{ store.currentMonth }}月
-          <span class="period-label">（{{ period.periodStart.slice(5).replace('-', '/') }}〜{{ period.periodEnd.slice(5).replace('-', '/') }}）</span>
-        </h2>
+        <div class="month-title-wrapper">
+          <h2 class="month-title">{{ store.currentYear }}年 {{ store.currentMonth }}月</h2>
+          <div class="period-label">（{{ period.periodStart.slice(5).replace('-', '/') }}〜{{ period.periodEnd.slice(5).replace('-', '/') }}）</div>
+        </div>
         <button class="nav-btn" @click="store.nextMonth()">＞</button>
         <button class="btn-add" @click="openAddModal()">＋</button>
       </div>
@@ -319,8 +319,11 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-.month-title {
+.month-title-wrapper {
   flex: 1;
+}
+
+.month-title {
   text-align: center;
   font-size: 1.2rem;
   font-weight: bold;
@@ -329,6 +332,7 @@ onMounted(() => {
 }
 
 .period-label {
+  text-align: center;
   font-size: 0.75rem;
   font-weight: normal;
   color: #888;
