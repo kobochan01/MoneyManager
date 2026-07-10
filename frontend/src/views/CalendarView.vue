@@ -131,9 +131,7 @@ function closeModal() {
 }
 
 function formatAmountShort(amount: string): string {
-  const n = Number(amount)
-  if (n >= 10000) return `¥${Math.floor(n / 1000)}K`
-  return `¥${n.toLocaleString('ja-JP')}`
+  return `¥${Number(amount).toLocaleString('ja-JP')}`
 }
 
 function formatSummaryAmount(n: number): string {
