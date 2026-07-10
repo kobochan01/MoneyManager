@@ -65,4 +65,18 @@ describe('CalendarView', () => {
     expect(wrapper.text()).toContain('¥12,000')
     expect(wrapper.text()).not.toContain('K')
   })
+
+  it('日付セルをクリックするとその日の収支一覧モーダルが開く', async () => {
+    const wrapper = mount(CalendarView, {
+      global: { stubs: { TransactionModal: true } },
+    })
+    await flushPromises()
+
+    expect(wrapper.findComponent({ name: 'DayTransactionListModal' }).exists()).toBe(false)
+
+    await wrapper.find('.day-cell.is-today').trigger('click')
+
+    const listModal = wrapper.findComponent({ name: 'DayTransactionListModal' })
+    expect(listModal.exists()).toBe(true)
+  })
 })
