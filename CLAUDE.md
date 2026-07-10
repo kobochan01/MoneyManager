@@ -228,6 +228,13 @@ rails db:migrate
 - ラベル: `bug` / `enhancement` / `documentation` / `chore`
 - PR テンプレート: `.github/PULL_REQUEST_TEMPLATE.md`
 
+## デプロイ（AWS）
+
+- デプロイ先: AWS（スクール課題の指定）／ EC2（アプリ本体）+ RDS（MySQL）
+- 無料枠の範囲で構成する（インスタンスタイプ・リージョンなど無料枠を超えそうな設定は特に注意する）
+- 設定ファイル・IaCコード（Terraform等）の作成・編集は自由に進めてよい
+- 実際にAWS上でリソースを作成・起動・変更する操作（EC2起動、RDS構築、`aws`コマンドでの作成系操作、`terraform apply`等）は、実行前に必ずユーザーに確認を取る
+
 ## ドキュメント更新対象
 
 - README.md
