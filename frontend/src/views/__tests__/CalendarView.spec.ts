@@ -79,4 +79,19 @@ describe('CalendarView', () => {
     const listModal = wrapper.findComponent({ name: 'DayTransactionListModal' })
     expect(listModal.exists()).toBe(true)
   })
+
+  it('ヘルプボタンを押すとヘルプモーダルが開く', async () => {
+    const wrapper = mount(CalendarView, {
+      global: { stubs: { TransactionModal: true } },
+    })
+    await flushPromises()
+
+    expect(wrapper.findComponent({ name: 'HelpModal' }).exists()).toBe(false)
+
+    const helpButton = wrapper.findAll('button').find((b) => b.text().includes('ヘルプ'))
+    expect(helpButton).toBeTruthy()
+    await helpButton!.trigger('click')
+
+    expect(wrapper.findComponent({ name: 'HelpModal' }).exists()).toBe(true)
+  })
 })
