@@ -7,6 +7,7 @@ import { useUserSettingStore } from '@/stores/userSettings'
 import { buildCalendarGrid, computeTapeStatus, computePeriod } from '@/utils/calendar'
 import TransactionModal from '@/components/TransactionModal.vue'
 import DayTransactionListModal from '@/components/DayTransactionListModal.vue'
+import HelpModal from '@/components/HelpModal.vue'
 import type { Transaction, ScheduledFixedExpense } from '@/api/types'
 import { getScheduledFixedExpenses } from '@/api/fixedExpenses'
 
@@ -138,6 +139,8 @@ function closeDayList() {
   selectedDayForList.value = undefined
 }
 
+const showHelpModal = ref(false)
+
 function formatAmountShort(amount: string): string {
   return `¥${Number(amount).toLocaleString('ja-JP')}`
 }
@@ -168,6 +171,7 @@ onMounted(() => {
         <button class="btn-settings" @click="router.push('/fixed-expenses')">固定費</button>
         <button class="btn-settings" @click="router.push('/group')">グループ</button>
         <button class="btn-settings" @click="router.push('/settings')">設定</button>
+        <button class="btn-settings" @click="showHelpModal = true">ヘルプ</button>
         <button class="btn-logout" @click="handleLogout">ログアウト</button>
       </div>
     </header>
@@ -262,6 +266,8 @@ onMounted(() => {
       :date="selectedDayForList"
       @close="closeDayList"
     />
+
+    <HelpModal v-if="showHelpModal" @close="showHelpModal = false" />
   </div>
 </template>
 
