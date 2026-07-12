@@ -1,6 +1,23 @@
-import type { Transaction } from '@/api/types'
+import type { Transaction, ScheduledFixedExpense } from '@/api/types'
 
 export type TapeStatus = 'none' | 'green' | 'red'
+
+export type PeriodListEntry =
+  | {
+      kind: 'transaction'
+      date: string
+      categoryName: string
+      amount: number
+      transactionType: 'income' | 'expense'
+      transaction: Transaction
+    }
+  | {
+      kind: 'fixed_expense'
+      date: string
+      categoryName: string
+      amount: number
+      scheduledFixedExpense: ScheduledFixedExpense
+    }
 
 export function computePeriod(
   displayYear: number,
@@ -106,4 +123,34 @@ export function computeTapeStatus(
   }
 
   return result
+}
+
+export function buildPeriodEntryList(
+  transactions: Transaction[],
+  scheduledFixedExpenses: ScheduledFixedExpense[],
+  periodStart: string,
+  periodEnd: string,
+): PeriodListEntry[] {
+  const txEntries: PeriodListEntry[] = transactions
+    .filter((t) => t.date >= periodStart && t.date <= periodEnd)
+    .map((t) => ({
+      kind: 'transaction',
+      date: t.date,
+      categoryName: t.category.name,
+      amount: Number(t.amount),
+      transactionType: t.transaction_type,
+      transaction: t,
+    }))
+
+  const feEntries: PeriodListEntry[] = scheduledFixedExpenses
+    .filter((fe) => fe.date >= periodStart && fe.date <= periodEnd)
+    .map((fe) => ({
+      kind: 'fixed_expense',
+      date: fe.date,
+      categoryName: fe.category.name,
+      amount: fe.amount,
+      scheduledFixedExpense: fe,
+    }))
+
+  return [...txEntries, ...feEntries].sort((a, b) => a.date.localeCompare(b.date))
 }

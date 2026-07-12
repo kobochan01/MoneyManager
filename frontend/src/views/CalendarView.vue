@@ -4,7 +4,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTransactionStore } from '@/stores/transactions'
 import { useUserSettingStore } from '@/stores/userSettings'
-import { buildCalendarGrid, computeTapeStatus, computePeriod } from '@/utils/calendar'
+import { buildCalendarGrid, computeTapeStatus, computePeriod, buildPeriodEntryList } from '@/utils/calendar'
+import type { PeriodListEntry } from '@/utils/calendar'
 import TransactionModal from '@/components/TransactionModal.vue'
 import DayTransactionListModal from '@/components/DayTransactionListModal.vue'
 import HelpModal from '@/components/HelpModal.vue'
@@ -113,6 +114,38 @@ const periodFixedExpense = computed(() =>
 )
 
 const periodBalance = computed(() => periodIncome.value - periodExpense.value - periodFixedExpense.value)
+
+const periodEntries = computed(() =>
+  buildPeriodEntryList(
+    periodTransactions.value,
+    scheduledFixedExpenses.value,
+    period.value.periodStart,
+    period.value.periodEnd,
+  ),
+)
+
+function entryKey(entry: PeriodListEntry): string {
+  return entry.kind === 'transaction' ? `tx-${entry.transaction.id}` : `fe-${entry.scheduledFixedExpense.id}`
+}
+
+function formatEntryDate(date: string): string {
+  return date.slice(5).replace('-', '/')
+}
+
+function formatEntryAmount(entry: PeriodListEntry): string {
+  const sign = entry.kind === 'fixed_expense' || entry.transactionType === 'expense' ? '-' : '+'
+  return `${sign}¥${entry.amount.toLocaleString('ja-JP')}`
+}
+
+function handleEntryClick(entry: PeriodListEntry) {
+  if (entry.kind === 'transaction') {
+    editingTransaction.value = entry.transaction
+    selectedDate.value = undefined
+    showModal.value = true
+  } else {
+    router.push('/fixed-expenses')
+  }
+}
 
 function openAddModal(date?: string) {
   editingTransaction.value = undefined
@@ -249,6 +282,32 @@ onMounted(() => {
         >
           <span class="summary-label">残　　高</span>
           <span class="summary-value">¥{{ formatSummaryAmount(periodBalance) }}</span>
+        </div>
+      </div>
+
+      <!-- 収支一覧 -->
+      <div class="entry-list">
+        <h3 class="entry-list-title">収支一覧</h3>
+        <p v-if="periodEntries.length === 0" class="status-message">
+          この期間の収支はまだ登録されていません
+        </p>
+        <div
+          v-for="entry in periodEntries"
+          :key="entryKey(entry)"
+          class="entry-row"
+          @click="handleEntryClick(entry)"
+        >
+          <span class="entry-date">{{ formatEntryDate(entry.date) }}</span>
+          <span class="entry-category">
+            {{ entry.categoryName }}
+            <span v-if="entry.kind === 'fixed_expense'" class="entry-tag">固定費</span>
+          </span>
+          <span
+            class="entry-amount"
+            :class="entry.kind === 'fixed_expense' ? 'expense' : entry.transactionType"
+          >
+            {{ formatEntryAmount(entry) }}
+          </span>
         </div>
       </div>
     </main>
@@ -544,6 +603,73 @@ onMounted(() => {
 }
 
 .status-message.error {
+  color: #e74c3c;
+}
+
+/* 収支一覧 */
+.entry-list {
+  margin-top: 16px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.entry-list-title {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 8px 0;
+}
+
+.entry-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.entry-row:hover {
+  background: #f5f7fa;
+}
+
+.entry-row:last-child {
+  border-bottom: none;
+}
+
+.entry-date {
+  font-size: 0.8rem;
+  color: #888;
+  flex-shrink: 0;
+  width: 40px;
+}
+
+.entry-category {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.entry-tag {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #eef1f5;
+  color: #888;
+  font-size: 0.7rem;
+}
+
+.entry-amount {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.entry-amount.income {
+  color: #2ecc71;
+}
+
+.entry-amount.expense {
   color: #e74c3c;
 }
 </style>
