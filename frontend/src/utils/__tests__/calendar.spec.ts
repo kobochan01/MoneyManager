@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { buildCalendarGrid, computeTapeStatus, computePeriod } from '../calendar'
-import type { Transaction } from '@/api/types'
+import { buildCalendarGrid, computeTapeStatus, computePeriod, buildPeriodEntryList } from '../calendar'
+import type { Transaction, ScheduledFixedExpense } from '@/api/types'
 
 const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: 1,
@@ -10,6 +10,15 @@ const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
   memo: null,
   category: { id: 1, name: '食費' },
   user: { id: 1, name: 'test' },
+  ...overrides,
+})
+
+const makeFixed = (overrides: Partial<ScheduledFixedExpense> = {}): ScheduledFixedExpense => ({
+  id: 1,
+  name: '家賃',
+  amount: 50000,
+  date: '2026-05-01',
+  category: { id: 2, name: '住居費' },
   ...overrides,
 })
 
@@ -147,5 +156,55 @@ describe('computeTapeStatus', () => {
     expect(map.get('2026-06-25')).toBe('green')
     expect(map.get('2026-07-10')).toBe('green')
     expect(map.get('2026-07-20')).toBe('green')
+  })
+})
+
+describe('buildPeriodEntryList', () => {
+  it('通常の収支と固定費予定を日付昇順にまとめる', () => {
+    const txs = [
+      makeTx({ id: 1, date: '2026-05-10', transaction_type: 'expense', amount: '1000' }),
+      makeTx({ id: 2, date: '2026-05-05', transaction_type: 'income', amount: '3000' }),
+    ]
+    const fixed = [makeFixed({ id: 1, date: '2026-05-01' })]
+
+    const list = buildPeriodEntryList(txs, fixed, '2026-05-01', '2026-05-31')
+
+    expect(list.map((e) => e.date)).toEqual(['2026-05-01', '2026-05-05', '2026-05-10'])
+  })
+
+  it('期間外のデータは除外される', () => {
+    const txs = [makeTx({ id: 1, date: '2026-04-30' }), makeTx({ id: 2, date: '2026-06-01' })]
+    const fixed = [makeFixed({ id: 1, date: '2026-04-01' })]
+
+    const list = buildPeriodEntryList(txs, fixed, '2026-05-01', '2026-05-31')
+
+    expect(list).toHaveLength(0)
+  })
+
+  it('通常の収支は kind: transaction で元データを保持する', () => {
+    const tx = makeTx({ id: 1, date: '2026-05-10', transaction_type: 'income', amount: '2000' })
+    const list = buildPeriodEntryList([tx], [], '2026-05-01', '2026-05-31')
+
+    expect(list[0]).toMatchObject({
+      kind: 'transaction',
+      date: '2026-05-10',
+      categoryName: '食費',
+      amount: 2000,
+      transactionType: 'income',
+      transaction: tx,
+    })
+  })
+
+  it('固定費予定は kind: fixed_expense で元データを保持する', () => {
+    const fe = makeFixed({ id: 1, date: '2026-05-01', amount: 50000 })
+    const list = buildPeriodEntryList([], [fe], '2026-05-01', '2026-05-31')
+
+    expect(list[0]).toMatchObject({
+      kind: 'fixed_expense',
+      date: '2026-05-01',
+      categoryName: '住居費',
+      amount: 50000,
+      scheduledFixedExpense: fe,
+    })
   })
 })
