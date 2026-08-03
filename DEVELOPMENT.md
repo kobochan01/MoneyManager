@@ -14,6 +14,7 @@
 5. [Gitブランチ戦略](#5-gitブランチ戦略)
 6. [テストの書き方・実行方法](#6-テストの書き方実行方法)
 7. [よく使うコマンド集](#7-よく使うコマンド集)
+8. [AWSへのデプロイ](#awsへのデプロイ)
 
 ---
 
@@ -614,6 +615,56 @@ npm test
 # ビルド（本番用ファイルを生成）
 npm run build
 ```
+
+---
+
+## AWSへのデプロイ
+
+インフラはTerraformで管理する（`terraform/`ディレクトリ）。構成の詳細は[docs/tech-stack.md](docs/tech-stack.md)を参照。
+
+### 初回セットアップ（インフラ構築）
+
+```powershell
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+# terraform.tfvars を編集する（自分のIP・DBパスワード・RAILS_MASTER_KEYなど）
+terraform init
+terraform apply
+```
+
+- EC2起動時、`user_data`がRuby(rbenvでビルド)・nginx・systemdサービスを自動セットアップする（完了まで10分程度）
+- 初回のRubyビルドはCPU負荷が高いため、`main.tf`の`credit_specification`を一時的に`unlimited`にしてから`terraform apply`し、**完了後は必ず`standard`に戻す**こと（無料枠を超えないため）
+
+### アプリケーションのデプロイ（コード更新時）
+
+```powershell
+# 1. フロントエンドをビルドしてEC2へ転送
+cd frontend
+npm run build
+scp -i ~/.ssh/money-manager-key.pem -r dist/* ec2-user@<EC2のIP>:/tmp/frontend-dist/
+ssh -i ~/.ssh/money-manager-key.pem ec2-user@<EC2のIP> "sudo cp -r /tmp/frontend-dist/. /var/www/html/ && sudo chown -R nginx:nginx /var/www/html"
+
+# 2. バックエンドをgit archiveで固めて転送
+#    （backend/tmpやmaster.keyなどgitignore対象は自動的に除外される）
+cd ..
+git archive --format=tar.gz -o backend.tar.gz HEAD:backend
+scp -i ~/.ssh/money-manager-key.pem backend.tar.gz ec2-user@<EC2のIP>:/tmp/
+ssh -i ~/.ssh/money-manager-key.pem ec2-user@<EC2のIP> "tar -xzf /tmp/backend.tar.gz -C /opt/moneymanager/backend"
+
+# 3. EC2にSSHして依存関係のインストール・DBマイグレーション・再起動
+ssh -i ~/.ssh/money-manager-key.pem ec2-user@<EC2のIP>
+export PATH="$HOME/.rbenv/shims:$HOME/.rbenv/bin:$PATH"
+cd /opt/moneymanager/backend
+bundle install
+RAILS_ENV=production DB_HOST=<RDSエンドポイント> BACKEND_DATABASE_PASSWORD=<パスワード> RAILS_MASTER_KEY=<マスターキー> ruby bin/rails db:migrate
+sudo systemctl restart moneymanager
+```
+
+### ハマりどころ
+
+- `bin/rails`に実行権限がなく`Permission denied`になることがある（Windows上でcommitされたファイルのため）→ `ruby bin/rails ...` の形で実行する
+- `/etc/moneymanager/app.env`はroot専用権限のため`ec2-user`から`source`できない → SSHでの手動実行時は環境変数を直接指定する
+- t3.microはメモリが少ないため、`bundle install`は`bundle config set jobs 1`で直列インストールにしないとメモリ不足でプロセスが強制終了することがある
 
 ---
 
