@@ -184,6 +184,16 @@ resource "aws_instance" "backend" {
   vpc_security_group_ids = [aws_security_group.ec2.id]
   key_name               = var.ec2_key_name
 
+  # user_dataはインスタンス初回起動時にしか実行されないため、変更を確実に反映させるには
+  # 作り直し（再作成）が必要。デフォルト(false)だとその場更新扱いになり再実行されない
+  user_data_replace_on_change = true
+
+  # unlimitedにするとCPUクレジットを使い切った後も追加課金してバーストし続けるため、
+  # 無料枠を超えないようstandard（クレジット切れ後は基準値まで性能が落ちるだけ）にする
+  credit_specification {
+    cpu_credits = "standard"
+  }
+
   # NOTE: bundle install・DBマイグレーション・moneymanagerサービスの起動は
   # アプリコードが存在しないためここでは行わない。デプロイ時に別途SSHで実行する。
   user_data = <<-EOF
@@ -201,9 +211,21 @@ resource "aws_instance" "backend" {
     mkdir -p /opt/moneymanager
     chown -R ec2-user:ec2-user /opt/moneymanager
 
+    # t3.microはメモリが1GB弱しかなく、Rubyのビルド（make）でメモリ不足になりOOM Killされるため、
+    # スワップ領域を用意して逃げ場を作る
+    fallocate -l 1G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
     # rbenv + ruby-build で backend/.ruby-version と同じRubyをビルドする
     sudo -u ec2-user -H bash <<'RBENV'
     set -eux
+    # 並列コンパイルによる同時メモリ使用量の増加を避けるため直列ビルドにする
+    export MAKE_OPTS='-j1'
+    # /tmpはtmpfs（メモリ上のディスク、約460MBしかない）なのでビルド作業場所をディスク上の/var/tmpにする
+    export TMPDIR='/var/tmp'
     git clone https://github.com/rbenv/rbenv.git ~/.rbenv
     git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
     echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
