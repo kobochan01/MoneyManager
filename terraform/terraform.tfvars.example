@@ -1,0 +1,10 @@
+aws_region   = "ap-northeast-1"
+project_name = "money-manager"
+ec2_key_name = "money-manager-key"
+my_ip_cidr   = "203.0.113.1/32" # `curl https://checkip.amazonaws.com` などで確認した自分のIP/32
+
+db_username = "backend"
+db_password = "CHANGE_ME"
+
+# backend/config/master.key の中身をそのままコピーする
+rails_master_key = "CHANGE_ME"
