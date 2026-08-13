@@ -35,6 +35,14 @@ const form = ref({
 
 const errors = ref<string[]>([])
 const submitting = ref(false)
+const isAddingNewCategory = ref(false)
+
+function onCategorySelectChange(): void {
+  if (form.value.category_name === '__new__') {
+    isAddingNewCategory.value = true
+    form.value.category_name = ''
+  }
+}
 
 watch(
   () => props.transaction,
@@ -143,17 +151,18 @@ async function submit() {
         <div class="field">
           <label for="category">カテゴリ</label>
           <select
-            v-if="filteredCategories.length > 0 && !transaction"
+            v-if="filteredCategories.length > 0 && !transaction && !isAddingNewCategory"
             id="category"
             v-model="form.category_name"
             required
+            @change="onCategorySelectChange"
           >
             <option value="">カテゴリを選択してください</option>
             <option v-for="c in filteredCategories" :key="c.id" :value="c.name">{{ c.name }}</option>
             <option value="__new__">＋ 新しいカテゴリを入力</option>
           </select>
           <input
-            v-if="filteredCategories.length === 0 || form.category_name === '__new__' || !!transaction"
+            v-if="filteredCategories.length === 0 || isAddingNewCategory || !!transaction"
             id="category-input"
             v-model="form.category_name"
             type="text"
