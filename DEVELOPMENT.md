@@ -88,7 +88,7 @@ rails --version
 
 ```powershell
 # MoneyManager フォルダに移動
-cd C:\Projects\MoneyManager
+cd (git rev-parse --show-toplevel)
 
 # Rails API プロジェクトを作成
 # --api        : APIモード（HTMLを返さない、JSONのみ）
@@ -106,7 +106,7 @@ bundle install
 
 ```powershell
 # MoneyManager フォルダに戻る
-cd C:\Projects\MoneyManager
+cd (git rev-parse --show-toplevel)
 
 # Vue + TypeScript + Vite のプロジェクトを作成
 npm create vue@latest frontend
@@ -126,7 +126,7 @@ npm install
 
 ```powershell
 # MoneyManager フォルダで
-cd C:\Projects\MoneyManager
+cd (git rev-parse --show-toplevel)
 docker compose up -d
 # → MySQLコンテナが起動する
 ```
@@ -134,7 +134,7 @@ docker compose up -d
 #### データベースの作成
 
 ```powershell
-cd C:\Projects\MoneyManager\backend
+cd "$(git rev-parse --show-toplevel)/backend"
 rails db:create    # データベースを作成
 rails db:migrate   # テーブルを作成（マイグレーション実行）
 ```
@@ -156,7 +156,7 @@ rails db:migrate   # テーブルを作成（マイグレーション実行）
 #### ターミナル① MySQL を起動
 
 ```powershell
-cd C:\Projects\MoneyManager
+cd (git rev-parse --show-toplevel)
 docker compose up -d
 ```
 
@@ -166,7 +166,7 @@ docker compose up -d
 #### ターミナル② Rails を起動
 
 ```powershell
-cd C:\Projects\MoneyManager\backend
+cd "$(git rev-parse --show-toplevel)/backend"
 rails server
 # → http://localhost:3000 で Rails が起動
 ```
@@ -174,7 +174,7 @@ rails server
 #### ターミナル③ Vue を起動
 
 ```powershell
-cd C:\Projects\MoneyManager\frontend
+cd "$(git rev-parse --show-toplevel)/frontend"
 npm run dev
 # → http://localhost:5173 で Vue が起動
 ```
@@ -243,7 +243,7 @@ Rails の開発は以下の順番で進めます。
 マイグレーションとは「データベースのテーブルを作る・変更する指示書」です。
 
 ```powershell
-cd C:\Projects\MoneyManager\backend
+cd "$(git rev-parse --show-toplevel)/backend"
 
 # User テーブルを作るマイグレーションを生成
 rails generate migration CreateUsers name:string email:string:uniq password_digest:string
@@ -408,7 +408,7 @@ git merge origin/main
 ### バックエンドのテスト（RSpec）
 
 ```powershell
-cd C:\Projects\MoneyManager\backend
+cd "$(git rev-parse --show-toplevel)/backend"
 
 # 全テストを実行
 bundle exec rspec
@@ -431,7 +431,7 @@ backend/spec/
 ### フロントエンドのテスト（Vitest）
 
 ```powershell
-cd C:\Projects\MoneyManager\frontend
+cd "$(git rev-parse --show-toplevel)/frontend"
 
 # テストを実行
 npm test
@@ -519,7 +519,7 @@ frontend/src/
 ### フロントエンドのテスト実行
 
 ```powershell
-cd C:\Projects\MoneyManager\frontend
+cd "$(git rev-parse --show-toplevel)/frontend"
 
 # テスト実行（Vitest）
 npm run test:unit -- --run
