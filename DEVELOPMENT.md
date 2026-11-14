@@ -666,6 +666,17 @@ sudo systemctl restart moneymanager
 - `/etc/moneymanager/app.env`はroot専用権限のため`ec2-user`から`source`できない → SSHでの手動実行時は環境変数を直接指定する
 - t3.microはメモリが少ないため、`bundle install`は`bundle config set jobs 1`で直列インストールにしないとメモリ不足でプロセスが強制終了することがある
 
+### 再構築時の注意
+
+AWS上の環境は2026-11-14に撤去済み（RDS・EC2・EBS・Elastic IP）。VPC・サブネット・セキュリティグループ・DBサブネットグループは無料のため残している。
+
+- **Terraformのstateは残っていない。** 残っているVPC等と名前（`money-manager-*`）が重なるため、`terraform apply`の前にAWSコンソールで残存リソースを確認し、削除するか`terraform import`するかを決める
+- **RDSのMySQLは8.4。** 8.0は標準サポート終了（2026-07-31）後に延長サポート料金が自動で課金され、db.t3.microでも月約$200になった。バージョンを決める前にRDSのリリースカレンダーで標準サポート期限を確認する
+- **MySQL 8.4の新規ユーザーは`caching_sha2_password`になり、RDSではこの方式の接続にSSLが必要。** EC2のmysql2はMariaDB Connector/C（`mariadb105-devel`）でビルドされるため、初回デプロイ時に`db:migrate`で接続できるか確認し、失敗したら`database.yml`のproductionにSSL設定（RDSのCA証明書）を追加する
+- **`master.key`は破棄済み。** `rails credentials:edit`で新しく生成し、`terraform.tfvars`の`rails_master_key`に設定する
+- ローカル開発用の`docker-compose.yml`は`mysql:8.0`のまま（本番と差がある）
+- 撤去後は継続課金がないことをCost Explorerの日別請求で確認する。開発を終えるときは同じ手順でリソースを削除する
+
 ---
 
 ## トラブルシューティング

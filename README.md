@@ -28,8 +28,8 @@ https://github.com/user-attachments/assets/03751d95-8e4b-449e-b50f-639a1dfd7b12
 
 ## デプロイ
 
-AWS（EC2 + RDS）にデプロイ済みです。インフラはTerraformで管理しています（[terraform/](terraform/)）。
-本番環境のURLは別途共有します。
+AWS（EC2 + RDS）にデプロイしていましたが、運用を終えたため2026-11-14に撤去しました（現在は本番環境なし）。
+インフラはTerraformで管理しています（[terraform/](terraform/)）。再構築する場合は [DEVELOPMENT.md の「再構築時の注意」](DEVELOPMENT.md#再構築時の注意) を参照してください。
 
 ---
 

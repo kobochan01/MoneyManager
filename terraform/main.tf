@@ -145,7 +145,9 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_db_instance" "mysql" {
   identifier        = "${var.project_name}-db"
   engine            = "mysql"
-  engine_version    = "8.0"
+  # 8.0はRDS標準サポートが2026-07-31で終了し、以降は延長サポート料金（db.t3.microで月約$180）が自動で課金される。
+  # 8.4はLTSで標準サポートが2029-07-31まで。バージョンを上げる前に必ずRDSのリリースカレンダーで期限を確認すること
+  engine_version    = "8.4"
   instance_class    = "db.t3.micro"
   allocated_storage = 20
   storage_type      = "gp2"
